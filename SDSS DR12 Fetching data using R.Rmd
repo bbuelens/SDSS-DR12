@@ -1,0 +1,100 @@
+---
+title: "SDSS DR12 - Fetching data using R"
+author: "Bart Buelens"
+date: "Thursday, February 19, 2015"
+output: html_document
+---
+
+Data Release 12 (DR12) of the Sloan Digital Sky Survey is now available (early 2015). We obtain some data using SQL queries executed from within R and conduct an initial exploration of the data.
+
+Fetching data using SQL queries
+-------------------------------
+
+First we load some libraries used in this document.
+
+```{r, message=FALSE, cache=TRUE}
+library(RCurl)
+library(ggplot2)
+```
+
+We formulate a SQL query, for example the following.
+
+```{r, cache=TRUE}
+mySqlQuery = 
+"SELECT objID, htmID, z, ra, dec, cx, cy, cz, class, subClass, type, survey, programname
+FROM SpecPhoto
+WHERE (htmid*37 & 0x000000000000FFFF) < (65)"
+```
+
+This query will ... etc + explain random number thing.
+
+```{r, cache=TRUE}
+mySqlQuery = gsub(pattern="\n",replacement=" ",x=mySqlQuery)
+urlBase = "http://skyserver.sdss.org/dr12/en/tools/search/x_sql.aspx"
+X = getForm(urlBase, cmd = mySqlQuery, format = "csv")
+write(X,file="SDSSsample.csv")
+```
+
+We now have a data file containg the requested SDSS data. The above need only to be conducted once. Thereafter, the data can be loaded from the local hard disk, of course.
+
+Initial data exploration
+------------------------
+
+The only aim of this short section is to ascertain that the SQL query has produced sensible data that can be used in other analyses.
+
+Let's start clean and load the data file.
+
+```{r, cache=TRUE}
+rm(list=ls()) # clear everything in the workspace
+A = read.table("SDSSsample.csv", header=TRUE, sep=",", dec=".", comment.char="#")
+```
+
+We now have data frame A containing our data.
+
+```{r, cache=TRUE}
+str(A)
+xtabs(~class, A)
+xtabs(~survey, A)
+xtabs(~survey+class, A)
+```
+
+Plot positions on celestial sphere using the Mollweide projection. Colour code objects by their class: galaxy, quasar or star.
+
+```{r, cache=TRUE}
+ggplot() +
+   geom_point(data=A, aes(x=ra, y=dec, colour=class), size=2) +
+   scale_colour_hue(l=50) +
+   coord_map("mollweide",xlim=c(0,360),ylim=c(-90,90)) +
+   scale_y_continuous(breaks = seq(-90, 90, 30)) +
+   scale_x_continuous(breaks = seq(0, 360, 60)) +
+   theme(axis.title = element_blank()) +
+   theme(axis.ticks = element_blank(), axis.text = element_blank()) + 
+   theme(panel.border = element_blank()) + 
+   theme(panel.grid.major = element_line(colour="darkgrey")) + 
+   ggtitle("SDSS DR12 coverage") + 
+   theme(plot.title = element_text(size = rel(2)))
+
+ggplot() +
+   geom_point(data=A, aes(x=ra, y=dec, colour=class), size=2) +
+   scale_colour_hue(l=50) +
+   coord_map("mollweide",xlim=c(0,360),ylim=c(-90,90)) +
+   scale_y_continuous(breaks = seq(-90, 90, 30)) +
+   scale_x_continuous(breaks = seq(0, 360, 60)) +
+   theme(axis.title = element_blank()) +
+   theme(axis.ticks = element_blank(), axis.text = element_blank()) + 
+   theme(panel.border = element_blank()) + 
+   theme(panel.grid.major = element_line(colour="darkgrey")) + 
+   ggtitle("SDSS DR12 coverage") + 
+   theme(plot.title = element_text(size = rel(1))) + 
+   theme(legend.position="none") +
+   facet_wrap(~class, nrow=1)
+```
+
+
+
+
+
+
+
+
+
