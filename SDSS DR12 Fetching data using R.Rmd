@@ -14,14 +14,14 @@ Fetching data using SQL queries
 
 First we load some libraries used in this document.
 
-```{r, message=FALSE, cache=TRUE}
+```{r, message=FALSE}
 library(RCurl)
 library(ggplot2)
 ```
 
 We formulate a SQL query, for example the following.
 
-```{r, cache=TRUE}
+```{r}
 mySqlQuery = 
 "SELECT objID, htmID, z, ra, dec, cx, cy, cz, class, subClass, type, survey, programname
 FROM SpecPhoto
@@ -34,7 +34,7 @@ Very useful is the [schema browser](http://skyserver.sdss.org/dr12/en/help/brows
 
 The SQL query is executed from within R and returns text in csv format, which can be written to disk:
 
-```{r, cache=TRUE}
+```{r}
 mySqlQuery = gsub(pattern="\n",replacement=" ",x=mySqlQuery)
 urlBase = "http://skyserver.sdss.org/dr12/en/tools/search/x_sql.aspx"
 X = getForm(urlBase, cmd = mySqlQuery, format = "csv")
@@ -50,14 +50,14 @@ The only aim of this short section is to ascertain that the SQL query has produc
 
 Start clean and load the data file:
 
-```{r, cache=TRUE}
+```{r}
 rm(list=ls()) # clear everything in the workspace
 A = read.table("SDSSsample.csv", header=TRUE, sep=",", dec=".", comment.char="#")
 ```
 
 We now have data frame A containing our data. Let's look at what we have:
 
-```{r, cache=TRUE}
+```{r}
 str(A)
 xtabs(~class, A)
 xtabs(~survey, A)
@@ -66,7 +66,7 @@ xtabs(~survey+class, A)
 
 Plot positions on celestial sphere using the Mollweide projection. Colour code objects by their class: galaxy, quasar or star.
 
-```{r, cache=TRUE}
+```{r}
 ggplot() +
    geom_point(data=A, aes(x=ra, y=dec, colour=class), size=1) +
    scale_colour_hue(l=50) +
