@@ -1,11 +1,13 @@
----
-title: "SDSS DR12 - Fetching data using R"
-author: "Bart Buelens"
-date: "Thursday, February 19, 2015"
-output: html_document
----
+SDSS DR12 - Fetching data using R
+========================================================
 
-Data Release 12 (DR12) of the Sloan Digital Sky Survey is now available (early 2015). We obtain some data using SQL queries executed from within R and conduct an initial exploration of the data.
+Bart Buelens, 26 March 2015.
+
+[www.astrostatistics.org](http://www.astrostatistics.org/projects/sdss-dr-12)
+
+Data Release 12 (DR12) of the Sloan Digital Sky Survey is now available (since early 2015). We obtain some data using SQL queries executed from within R and conduct an initial exploration of the data.
+
+Data are available from the [SDSS SkyServer](http://skyserver.sdss.org/dr12/en/tools/toolshome.aspx) which contains a lot of information about accessing SDSS data. Of particular relevance is a tutorial on [how to fetch data using SQL](http://skyserver.sdss.org/dr12/en/help/howto/search/searchhowtohome.aspx).
 
 Fetching data using SQL queries
 -------------------------------
@@ -26,7 +28,11 @@ FROM SpecPhoto
 WHERE (htmid*37 & 0x000000000000FFFF) < (65)"
 ```
 
-This query will ... etc + explain random number thing.
+This query will select the listed columns from the SpecPhoto view. The WHERE statement makes a random selection of 0.1% of the data. How this works is explained [here](http://www.sdss.org/dr12/tutorials/random/).
+
+Very useful is the [schema browser](http://skyserver.sdss.org/dr12/en/help/browser/browser.aspx) giving an overview of all tables and view of the data release. For example, details of the SpecPhoto view are shown [here](http://skyserver.sdss.org/dr12/en/help/browser/browser.aspx#&&history=description+SpecPhoto+V).
+
+The SQL query is executed from within R and returns text in csv format, which can be written to disk:
 
 ```{r, cache=TRUE}
 mySqlQuery = gsub(pattern="\n",replacement=" ",x=mySqlQuery)
@@ -35,21 +41,21 @@ X = getForm(urlBase, cmd = mySqlQuery, format = "csv")
 write(X,file="SDSSsample.csv")
 ```
 
-We now have a data file containg the requested SDSS data. The above need only to be conducted once. Thereafter, the data can be loaded from the local hard disk, of course.
+We now have a data file containg the requested SDSS data. The above need only to be conducted once. Thereafter, the data can be loaded from the local hard disk.
 
 Initial data exploration
 ------------------------
 
 The only aim of this short section is to ascertain that the SQL query has produced sensible data that can be used in other analyses.
 
-Let's start clean and load the data file.
+Start clean and load the data file:
 
 ```{r, cache=TRUE}
 rm(list=ls()) # clear everything in the workspace
 A = read.table("SDSSsample.csv", header=TRUE, sep=",", dec=".", comment.char="#")
 ```
 
-We now have data frame A containing our data.
+We now have data frame A containing our data. Let's look at what we have:
 
 ```{r, cache=TRUE}
 str(A)
@@ -62,7 +68,7 @@ Plot positions on celestial sphere using the Mollweide projection. Colour code o
 
 ```{r, cache=TRUE}
 ggplot() +
-   geom_point(data=A, aes(x=ra, y=dec, colour=class), size=2) +
+   geom_point(data=A, aes(x=ra, y=dec, colour=class), size=1) +
    scale_colour_hue(l=50) +
    coord_map("mollweide",xlim=c(0,360),ylim=c(-90,90)) +
    scale_y_continuous(breaks = seq(-90, 90, 30)) +
@@ -73,21 +79,6 @@ ggplot() +
    theme(panel.grid.major = element_line(colour="darkgrey")) + 
    ggtitle("SDSS DR12 coverage") + 
    theme(plot.title = element_text(size = rel(2)))
-
-ggplot() +
-   geom_point(data=A, aes(x=ra, y=dec, colour=class), size=2) +
-   scale_colour_hue(l=50) +
-   coord_map("mollweide",xlim=c(0,360),ylim=c(-90,90)) +
-   scale_y_continuous(breaks = seq(-90, 90, 30)) +
-   scale_x_continuous(breaks = seq(0, 360, 60)) +
-   theme(axis.title = element_blank()) +
-   theme(axis.ticks = element_blank(), axis.text = element_blank()) + 
-   theme(panel.border = element_blank()) + 
-   theme(panel.grid.major = element_line(colour="darkgrey")) + 
-   ggtitle("SDSS DR12 coverage") + 
-   theme(plot.title = element_text(size = rel(1))) + 
-   theme(legend.position="none") +
-   facet_wrap(~class, nrow=1)
 ```
 
 
